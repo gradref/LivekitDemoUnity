@@ -1,11 +1,11 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
+using System.Text;
 using LiveKit;
 using UnityEngine;
 using UnityEngine.Networking;
 
-#pragma warning disable CS0618
+
 public class NetManager : MonoBehaviour
 {
     public delegate void PacketReceivedHandler( RemoteParticipant participant, IPacket packet, DataPacketKind kind );
@@ -21,32 +21,53 @@ public class NetManager : MonoBehaviour
     private readonly PacketWriter packetWriter = new PacketWriter();
     private const string livekitUrl = "wss://lkdemo.livekit.cloud";
 
-    protected void Awake()
+
+    struct UserData
     {
-        Application.ExternalEval( "socket.isReady = true;" );
+        public string name;
+        public string room;
     }
+
+    struct TokenData
+    {
+        public string token;
+    }
+
 
     /// <summary>
     /// Retrive a livekit token from server
     /// </summary>
     public void GetLivekitToken( string username, string room )
     {
-        Dictionary<string, string> dic = new Dictionary<string, string>()
-        {
-            ["name"] = username,
-            ["room"] = room
-        };
-        Application.ExternalCall( "socket.emit", "TOKEN_REQUEST", new JSONObject( dic ) );
+        this.StartCoroutine( this.PostTokenRequest( new UserData() { name = username, room = room } ) );
     }
 
-
     /// <summary>
-    /// Receive Token generated from the server
+    /// Send a post request and retrive the token
     /// </summary>
-    public void OnTokenGenerated( string token )
+    IEnumerator PostTokenRequest( UserData data )
     {
-        Debug.Log( "Token Received: " + token );
-        this.TokenGenerated?.Invoke( token );
+        var json = JsonUtility.ToJson( data );
+        byte[] rawBody = Encoding.UTF8.GetBytes( json );
+        string tokenurl = Application.absoluteURL + "GetToken";
+        Debug.Log( "token url " + tokenurl );
+        UnityWebRequest www = new UnityWebRequest( tokenurl, "POST" );
+        www.downloadHandler = new DownloadHandlerBuffer();
+        www.uploadHandler = new UploadHandlerRaw( rawBody );
+        www.SetRequestHeader( "Content-Type", "application/json" );
+        www.SetRequestHeader( "Accept", "application/json" );
+        yield return www.SendWebRequest();
+
+        if ( www.result != UnityWebRequest.Result.Success )
+        {
+            Debug.Log( www.error );
+        }
+        else
+        {
+            TokenData tokendata = JsonUtility.FromJson<TokenData>( www.downloadHandler.text );
+            Debug.Log( "Token Received: " + tokendata.token );
+            this.TokenGenerated?.Invoke( tokendata.token );
+        }
     }
 
 

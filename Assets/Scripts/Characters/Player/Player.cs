@@ -8,11 +8,16 @@ public class Player : MonoBehaviour
     public CharacterController Controller;
     public Animator Animator;
     public PlayerSettings Settings;
-
     protected int animIDSpeed;
-    protected int animIDGrounded;
-    protected int animIDJump;
-    protected int animIDFreeFall;
+
+    protected enum PlayerAnimationsBooleans
+    {
+        Grounded,
+        Jump,
+        FreeFall,
+    }
+
+    protected int[] animationsIds = new int[3];
 
     protected virtual void Awake()
     {
@@ -35,43 +40,39 @@ public class Player : MonoBehaviour
     {
         if ( animationEvent.animatorClipInfo.weight > 0.5f )
         {
-            AudioSource.PlayClipAtPoint( this.Settings.LandingAudioClip, this.transform.TransformPoint( Controller.center ), this.Settings.FootstepAudioVolume );
+            AudioSource.PlayClipAtPoint( this.Settings.LandingAudioClip, this.transform.TransformPoint( this.Controller.center ), this.Settings.FootstepAudioVolume );
         }
     }
 
-    [Flags]
-    public enum AnimationsFlags
-    {
-        None = 0,
-        Grounded = 1,
-        Jump = 2,
-        FreeFall = 4,
-    }
 
     private void AssignAnimationIDs()
     {
         this.animIDSpeed = Animator.StringToHash( "Speed" );
-        this.animIDGrounded = Animator.StringToHash( "Grounded" );
-        this.animIDJump = Animator.StringToHash( "Jump" );
-        this.animIDFreeFall = Animator.StringToHash( "FreeFall" );
+        this.animationsIds[(int)PlayerAnimationsBooleans.Grounded] = Animator.StringToHash( "Grounded" );
+        this.animationsIds[(int)PlayerAnimationsBooleans.Jump] = Animator.StringToHash( "Jump" );
+        this.animationsIds[(int)PlayerAnimationsBooleans.FreeFall] = Animator.StringToHash( "FreeFall" );
         //  this.animIDMotionSpeed = Animator.StringToHash( "MotionSpeed" );
     }
 
     public int GetAnimationBooleans()
     {
-        AnimationsFlags flags = 0;
-        flags |= this.Animator.GetBool( this.animIDGrounded ) ? AnimationsFlags.Grounded : AnimationsFlags.None;
-        flags |= this.Animator.GetBool( this.animIDJump ) ? AnimationsFlags.Jump : AnimationsFlags.None;
-        flags |= this.Animator.GetBool( this.animIDFreeFall ) ? AnimationsFlags.FreeFall : AnimationsFlags.None;
-        return (int)flags;
+        int flags = 0;
+        for ( int i = 0; i < this.animationsIds.Length; i++ )
+        {
+            if ( this.Animator.GetBool( this.animationsIds[i] ) )
+                flags |= ( 1 << i );
+        }
+
+        return flags;
     }
 
     public void SetAnimationBooleans( int booleans )
     {
-        AnimationsFlags flags = (AnimationsFlags)booleans;
-        this.Animator.SetBool( this.animIDGrounded, ( flags & AnimationsFlags.Grounded ) != AnimationsFlags.None );
-        this.Animator.SetBool( this.animIDJump, ( flags & AnimationsFlags.Jump ) != AnimationsFlags.None );
-        this.Animator.SetBool( this.animIDFreeFall, ( flags & AnimationsFlags.FreeFall ) != AnimationsFlags.None );
+        for ( int i = 0; i < this.animationsIds.Length; i++ )
+        {
+            bool status = ( ( booleans >> i ) & 1 ) == 1;
+            this.Animator.SetBool( this.animationsIds[i], status );
+        }
     }
 
     public void SetAnimationSpeed( float speed )

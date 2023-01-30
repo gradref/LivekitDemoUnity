@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 
 public class LobbyPanel : MonoBehaviour
@@ -29,8 +28,8 @@ public class LobbyPanel : MonoBehaviour
         yield return new WaitForSeconds( 3f );
         this.alertText.text = "";
     }
-
     public void TokenTest()
     {
+   
     }
 }

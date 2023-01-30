@@ -122,8 +122,8 @@ public class LocalPlayer : Player
             float _fallTimeoutDelta = this.Settings.FallTimeout;
 
             // update animator if using character
-            this.UpdateAnimation( this.animIDJump, false );
-            this.UpdateAnimation( this.animIDFreeFall, false );
+            this.UpdateAnimation( PlayerAnimationsBooleans.Jump, false );
+            this.UpdateAnimation( PlayerAnimationsBooleans.FreeFall, false );
 
             // stop our velocity dropping infinitely when grounded
             if ( this.verticalVelocity < 0.0f )
@@ -138,7 +138,7 @@ public class LocalPlayer : Player
                 this.verticalVelocity = Mathf.Sqrt( this.Settings.JumpHeight * -2f * this.Settings.Gravity );
 
                 // update animator if using character
-                this.UpdateAnimation( this.animIDJump, true );
+                this.UpdateAnimation( PlayerAnimationsBooleans.Jump, true );
             }
 
             // jump timeout
@@ -160,7 +160,7 @@ public class LocalPlayer : Player
             else
             {
                 // update animator if using character
-                this.UpdateAnimation( this.animIDFreeFall, true );
+                this.UpdateAnimation( PlayerAnimationsBooleans.FreeFall, true );
             }
 
             // if we are not grounded, do not jump
@@ -181,7 +181,7 @@ public class LocalPlayer : Player
         this.Grounded = Physics.CheckSphere( spherePosition, this.Settings.GroundedRadius, this.Settings.GroundLayers,
             QueryTriggerInteraction.Ignore );
         // update animator if using character
-        this.UpdateAnimation( this.animIDGrounded, this.Grounded );
+        this.UpdateAnimation( PlayerAnimationsBooleans.Grounded, this.Grounded );
     }
 
     private void CameraRotation()
@@ -213,8 +213,9 @@ public class LocalPlayer : Player
         }
     }
 
-    private void UpdateAnimation( int id, bool value )
+    private void UpdateAnimation( PlayerAnimationsBooleans playerAnimation, bool value )
     {
+        int id = this.animationsIds[(int)playerAnimation];
         if ( this.Animator.GetBool( id ) != value )
         {
             this.animationUpdated = true;

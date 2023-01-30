@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using LiveKit;
 using UnityEngine;
-using UnityEngine.Timeline;
 
 public class GameManager : MonoBehaviour
 {
@@ -29,8 +28,8 @@ public class GameManager : MonoBehaviour
     {
         DontDestroyOnLoad( this );
         Panels.SetActivePanel( this.LobbyPanel.gameObject );
-        this.NetManager.TokenGenerated += this.ConnectToLivekitRoom;
-        this.NetManager.ConnectionEnstablished += this.ConnectionEnstablished;
+        this.NetManager.TokenGenerated += ( string token ) => this.StartCoroutine( this.NetManager.ConnectLivekitRoom( token ) );
+        this.NetManager.ConnectionEnstablished += () => this.StartCoroutine( this.Join() );
         this.NetManager.RoomCreated += this.RoomCreated;
         this.NetManager.ConnetionFailed += this.ConnectionFailed;
         this.NetManager.PacketReceived += this.PacketReceived;
@@ -92,16 +91,6 @@ public class GameManager : MonoBehaviour
         this.LobbyPanel.AlertMessage( "Connected to Livekit room" );
     }
 
-
-    private void ConnectToLivekitRoom( string token )
-    {
-        this.StartCoroutine( this.NetManager.ConnectLivekitRoom( token ) );
-    }
-
-    private void ConnectionEnstablished()
-    {
-        this.StartCoroutine( this.Join() );
-    }
 
     private IEnumerator Join()
     {
@@ -264,11 +253,5 @@ public class GameManager : MonoBehaviour
             DestroyImmediate( this.localPlayer );
             this.localPlayer = null;
         }
-
-        this.NetManager.TokenGenerated -= this.ConnectToLivekitRoom;
-        this.NetManager.ConnectionEnstablished -= this.ConnectionEnstablished;
-        this.NetManager.RoomCreated -= this.RoomCreated;
-        this.NetManager.ConnetionFailed -= this.ConnectionFailed;
-        this.NetManager.PacketReceived -= this.PacketReceived;
     }
 }
